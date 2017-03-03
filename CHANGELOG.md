@@ -1,5 +1,13 @@
-# 0.10.x
+# 0.11.x
 
+## 0.11.0 - Unreleased
+
+* Added `content_type` and `content_encoding` configuration for
+   the Matcher plugin - #37
+* Added header options to set message headers based on the message content on
+  the Matcher plugin - #35
+
+# 0.10.x
 
 ## 0.10.1 - 2016-11-17
 

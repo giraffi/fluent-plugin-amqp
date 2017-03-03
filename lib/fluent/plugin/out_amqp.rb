@@ -49,10 +49,30 @@ module Fluent::Plugin
       config_set_default :@type, DEFAULT_BUFFER_TYPE
     end
 
+
+    class HeaderElement
+      include Fluent::Configurable
+
+      config_param :name, :string
+      config_param :source, :string, default: nil
+      config_param :default, :string, default: nil
+
+    end
+
     def configure(conf)
       compat_parameters_convert(conf, :buffer)
       super
       @conf = conf
+
+      # Extract the header configuration into a collection
+      @headers = conf.elements.select {|e|
+        e.name == 'header'
+      }.map {|e|
+        he = HeaderElement.new
+        he.configure(e)
+        he
+      }
+
       unless @host || @hosts
         raise Fluent::ConfigError, "'host' or 'hosts' must be specified."
       end
@@ -98,9 +118,10 @@ module Fluent::Plugin
       begin
         chunk.msgpack_each do |(tag, time, data)|
           begin
+            msg_headers = headers(tag,time,data)
             data = JSON.dump( data ) unless data.is_a?( String )
-            log.debug "Sending message #{data}, :key => #{routing_key( tag)} :headers => #{headers(tag,time)}"
-            @exch.publish(data, key: routing_key( tag ), persistent: @persistent, headers: headers( tag, time ))
+            log.debug "Sending message #{data}, :key => #{routing_key( tag)} :headers => #{msg_headers}"
+            @exch.publish(data, key: routing_key( tag ), persistent: @persistent, headers: msg_headers)
           rescue JSON::GeneratorError => e
             log.error "Failure converting data object to json string: #{e.message}"
             # Debug only - otherwise we may pollute the fluent logs with unparseable events and loop
@@ -130,11 +151,19 @@ module Fluent::Plugin
       end
     end
 
-    def headers( tag, time )
-      {}.tap do |h|
-        h[@tag_header] = tag if @tag_header
-        h[@time_header] = Time.at(time).utc.to_s if @time_header
-      end
+    def headers( tag, time, data )
+      h = {}
+
+      @headers.each{ |hdr|
+        h[hdr.name]  = data[hdr.source]
+        h[hdr.name] ||= hdr.default
+        log.debug "Assigning header #{hdr.name} = #{h[hdr.name]}"
+      }
+
+      h[@tag_header] = tag if @tag_header
+      h[@time_header] = Time.at(time).utc.to_s if @time_header
+
+      h
     end
 
 

@@ -27,7 +27,7 @@ This plugin provides both a Source and Matcher which uses RabbitMQ as its transp
 |fluent-amqp-plugin|fluent|ruby|
 |----|----|----|
 |>= 0.10.0 | >= 0.14.8 | >= 2.1 |
-| < 0.10.0 | > 0.10.0, < 2 <sup>*</sup> | >= 1.9  | 
+| < 0.10.0 | > 0.10.0, < 2 <sup>*</sup> | >= 1.9  |
 
 * May not support all future fluentd features
 
@@ -163,6 +163,33 @@ Note: The following are in addition to the common parameters shown above.
 |:exchange_type|:string|"direct"| Type of exchange ( direct, fanout, topic, headers )|
 |:persistent|:bool|false| | Are messages kept on the exchange even if RabbitMQ shuts down |
 |:key|:string|nil| Routing key to attach to events (Only applies when `exchange_type topic`) See also `tag_key`|
+
+#### Headings
+
+It is possible to specify message headers based on the content of the incoming
+message, or as a fixed default value as shown below;
+
+```
+<header>
+  name LogLevel
+  source level
+  default "INFO"
+</header>
+<header>
+  name SourceHost
+  default my.example.com
+</header>
+<header>
+  name CorrelationID
+  source x-request-id
+</header>
+```
+
+
+The header elements may be set multiple times for multiple additional headers
+to be included on any given message.
+
+Note: Obtaining values from nested json keys is not supported.
 
 ### Example
 
