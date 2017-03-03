@@ -19,8 +19,6 @@
 * Feature: Updated to use new FluentD 0.14 plugin format
 * Feature: Support for nanosecond precision
 
-
-
 # 0.9.x
 
 ## 0.9.3

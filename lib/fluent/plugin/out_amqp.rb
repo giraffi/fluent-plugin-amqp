@@ -44,6 +44,12 @@ module Fluent::Plugin
     config_param :tls_key, :string, default: nil
     config_param :tls_ca_certificates, :array, default: nil
     config_param :tls_verify_peer, :bool, default: true
+    config_param :content_type, :string, default: "application/octet"
+    config_param :content_encoding, :string, default: nil
+
+    config_section :header do
+      config_set_default :@type, DEFAULT_BUFFER_TYPE
+    end
 
     config_section :buffer do
       config_set_default :@type, DEFAULT_BUFFER_TYPE
@@ -123,8 +129,15 @@ module Fluent::Plugin
           begin
             msg_headers = headers(tag,time,data)
             data = JSON.dump( data ) unless data.is_a?( String )
-            log.debug "Sending message #{data}, :key => #{routing_key( tag)} :headers => #{msg_headers}"
-            @exch.publish(data, key: routing_key( tag ), persistent: @persistent, headers: msg_headers)
+            log.debug "Sending message #{data}, :key => #{routing_key( tag)} :headers => #{headers(tag,time)}"
+            @exch.publish(
+              data,
+              key: routing_key( tag ),
+              persistent: @persistent,
+              headers: headers( tag, time ),
+              content_type: @content_type,
+              content_encoding: @content_encoding)
+
           rescue JSON::GeneratorError => e
             log.error "Failure converting data object to json string: #{e.message}"
             # Debug only - otherwise we may pollute the fluent logs with unparseable events and loop

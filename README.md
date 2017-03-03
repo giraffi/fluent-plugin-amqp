@@ -163,6 +163,8 @@ Note: The following are in addition to the common parameters shown above.
 |:exchange_type|:string|"direct"| Type of exchange ( direct, fanout, topic, headers )|
 |:persistent|:bool|false| | Are messages kept on the exchange even if RabbitMQ shuts down |
 |:key|:string|nil| Routing key to attach to events (Only applies when `exchange_type topic`) See also `tag_key`|
+|:content_type|:string|"application/octet"| Content-type header to send with message |
+|:content_encoding|:string|nil| Content-Encoding header to send - eg base64 or rot13 |
 
 #### Headings
 
@@ -212,6 +214,7 @@ to be included on any given message.
   vhost /
   user guest
   pass guest
+  content_type application/json
 </match>
 ```
 

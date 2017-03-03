@@ -13,6 +13,7 @@ class AMPQOutputTest < Test::Unit::TestCase
 
   def setup
     Fluent::Test.setup
+    BunnyMock.use_bunny_queue_pop_api = true
   end
 
 def get_plugin(configuration = CONFIG)
@@ -164,7 +165,9 @@ end
 
       # Validate the message was delivered
       assert_equal 1, queue.message_count
-      assert_equal 'This is a simple string', queue.pop[:message]
+      deliveryProps, msgProps, message = queue.pop
+      assert_equal 'This is a simple string', message
+      assert_equal 'test', msgProps[:key]
 
     end
 
@@ -301,7 +304,8 @@ end
 
       # Validate the message was delivered
       assert_equal 1, queue.message_count
-      assert_equal JSON.dump(object) , queue.pop[:message]
+      deliveryProps, msgProps, message = queue.pop
+      assert_equal JSON.dump(object) , message
 
     end
 
@@ -329,9 +333,44 @@ end
 
       # Validate the message was _not_ delivered
       assert_equal 1, queue.message_count
-      assert_equal JSON.dump(complex_string_msg) , queue.pop[:message]
+      deliveryProps, msgProps, message = queue.pop
+      assert_equal JSON.dump(complex_string_msg) , message
 
     end
 
+
+      test 'Can explicitly specific content_type and encoding through configuration' do
+  # Testing these two bits;
+  #      data = JSON.dump( data ) unless data.is_a?( String )
+  #      @exch.publish(data, :key => routing_key( tag ), :persistent => @persistent, :headers => headers( tag, time ))
+
+        plugin = get_plugin( CONFIG + %[
+          content_type application/json
+          content_encoding base64 ] )
+
+        # Should have created the 'logs' queue
+        assert_equal true, plugin.connection.exchange_exists?('my_exchange')
+
+        # bind a testing queue to the exchange
+        queue = plugin.channel.queue 'my.test.queue'
+        queue.bind plugin.exch, routing_key: 'test'
+        # queue.test is now bound to the configured exchange
+
+        # v0.14 test driver does not permit to specify String object into #feed args.
+        # Message = Base64('{ "test": "this is a string" }')
+        es = Fluent::OneEventStream.new(Time.now.to_i, 'eyAidGVzdCI6ICJ0aGlzIGlzIGEgc3RyaW5nIiB9')
+        # Emit an event through the plugins driver
+        @driver.run(default_tag: 'test') do
+          @driver.feed(es)
+        end
+
+        # Validate the message was delivered
+        assert_equal 1, queue.message_count
+        deliveryProps, msgProps, message = queue.pop
+
+        assert_equal 'eyAidGVzdCI6ICJ0aGlzIGlzIGEgc3RyaW5nIiB9', message
+        assert_equal 'application/json', msgProps[:content_type]
+        assert_equal 'base64', msgProps[:content_encoding]
+      end
   end
 end
