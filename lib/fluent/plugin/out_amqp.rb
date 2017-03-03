@@ -70,6 +70,9 @@ module Fluent::Plugin
       }.map {|e|
         he = HeaderElement.new
         he.configure(e)
+        unless he.source || he.default
+            raise Fluent::ConfigError, "At least 'default' or 'source' must must be defined in a header configuration section."
+        end
         he
       }
 
@@ -155,8 +158,8 @@ module Fluent::Plugin
       h = {}
 
       @headers.each{ |hdr|
-        h[hdr.name]  = data[hdr.source]
-        h[hdr.name] ||= hdr.default
+        h[hdr.name]  = data[hdr.source] if hdr.source
+        h[hdr.name] ||= hdr.default if hdr.default
         log.debug "Assigning header #{hdr.name} = #{h[hdr.name]}"
       }
 

@@ -106,6 +106,19 @@ end
           ])
       end
     end
+
+    test 'invalid header configuration' do
+      assert_raise_message(/At least 'default' or 'source' must must be defined in a header configuration section/) do
+        create_driver(%[
+          type amqp
+          format json
+          host anywhere.example.com
+          <header>
+            name bob
+          </header>
+          ])
+      end
+    end
   end
 
   sub_test_case 'connection handling' do
@@ -158,48 +171,88 @@ end
 
     sub_test_case 'message_headers' do
 
+      def test_header_message_helper(config, event)
+        plugin = get_plugin( config )
+
+        # Should have created the 'logs' queue
+        assert_equal true, plugin.connection.exchange_exists?('my_exchange')
+
+        # bind a testing queue to the exchange
+        queue = plugin.channel.queue 'my.test.queue'
+        queue.bind plugin.exch, routing_key: 'test'
+        # queue.test is now bound to the configured exchange
+
+        # v0.14 test driver does not permit to specify String object into #feed args.
+        es = Fluent::OneEventStream.new(Time.now.to_i, event)
+        # Emit an event through the plugins driver
+        @driver.run(default_tag: 'test') do
+          @driver.feed(es)
+        end
+
+        # Validate the message was delivered
+        assert_equal 1, queue.message_count
+
+        queue.pop
+      end
+
       test 'Default headers are set even if message isnt json' do
 
-          plugin = get_plugin( CONFIG + %[
+          config = CONFIG + %[
               <header>
-                name unmatched_source_return_default
+                name expect-default-header-value
                 source this.doesnt.exist
                 default expectMe
               </header>
-
-            ])
-
-          # Should have created the 'logs' queue
-          assert_equal true, plugin.connection.exchange_exists?('my_exchange')
-
-          # bind a testing queue to the exchange
-          queue = plugin.channel.queue 'my.test.queue'
-          queue.bind plugin.exch, routing_key: 'test'
-          # queue.test is now bound to the configured exchange
-
-          # v0.14 test driver does not permit to specify String object into #feed args.
-          es = Fluent::OneEventStream.new(Time.now.to_i, 'This is a simple string, not json')
-          # Emit an event through the plugins driver
-          @driver.run(default_tag: 'test') do
-            @driver.feed(es)
-          end
-
-          # Validate the message was delivered
-          assert_equal 1, queue.message_count
-
-          event = queue.pop
-          assert_equal 'This is a simple string, not json', event[:message]
+            ]
+          message = 'This is a simple string, not json'
+          event = test_header_message_helper(config, message)
 
           headers = event[:options][:headers]
           assert_not_nil headers, "Did not find any headers"
-          assert_equal 'expectMe', headers["unmatched_source_return_default"]
+          assert_equal 'expectMe', headers["expect-default-header-value"]
 
         end
 
 
+        test 'Always use default when source is omitted' do
+
+            config =  CONFIG + %[
+                <header>
+                  name unmatched_source_return_default
+                  default expectMe
+                </header>
+            ]
+
+            message = 'This is a simple string, not json'
+
+            event = test_header_message_helper(config, message)
+            headers = event[:options][:headers]
+            assert_not_nil headers, "Did not find any headers"
+            assert_equal 'expectMe', headers["unmatched_source_return_default"]
+
+        end
+
+        test 'Dont set header if source is missing and default undefined' do
+
+            config =  CONFIG + %[
+                <header>
+                  name dont-set-this
+                  source missing.from.input
+                </header>
+            ]
+
+            message = {"aValue": "Custard"}
+
+            event = test_header_message_helper(config, message)
+            headers = event[:options][:headers]
+            assert_not_nil headers, "Did not find any headers"
+            assert_equal nil, headers["dont-set-this"], "Did not expect to find 'dont-set-this' header"
+
+        end
+
         test 'Headers are set when sending json object' do
 
-            plugin = get_plugin( CONFIG + %[
+            config = CONFIG + %[
                 <header>
                   name unmatched_source_return_default
                   source this.doesnt.exist
@@ -210,29 +263,11 @@ end
                   source aValue
                   default Rhubarb
                 </header>
-              ])
+            ]
 
-            # Should have created the 'logs' queue
-            assert_equal true, plugin.connection.exchange_exists?('my_exchange')
+            message = { "aValue": "Custard"}
 
-            # bind a testing queue to the exchange
-            queue = plugin.channel.queue 'my.test.queue'
-            queue.bind plugin.exch, routing_key: 'test'
-            # queue.test is now bound to the configured exchange
-
-            # v0.14 test driver does not permit to specify String object into #feed args.
-            es = Fluent::OneEventStream.new(Time.now.to_i, { "aValue": "Custard"})
-            # Emit an event through the plugins driver
-            @driver.run(default_tag: 'test') do
-              @driver.feed(es)
-            end
-
-            # Validate the message was delivered
-            assert_equal 1, queue.message_count
-
-            event = queue.pop
-            assert_equal '{"aValue":"Custard"}', event[:message]
-
+            event = test_header_message_helper(config, message)
             headers = event[:options][:headers]
             assert_not_nil headers, "Did not find any headers"
             assert_equal 'Custard', headers["matched_key"]

@@ -170,26 +170,35 @@ It is possible to specify message headers based on the content of the incoming
 message, or as a fixed default value as shown below;
 
 ```
-<header>
-  name LogLevel
-  source level
-  default "INFO"
-</header>
-<header>
-  name SourceHost
-  default my.example.com
-</header>
-<header>
-  name CorrelationID
-  source x-request-id
-</header>
+<matcher ...>
+...
+
+  <header>
+    name LogLevel
+    source level
+    default "INFO"
+  </header>
+  <header>
+    name SourceHost
+    default my.example.com
+  </header>
+  <header>
+    name CorrelationID
+    source x-request-id
+  </header>
+...
+</matcher>
 ```
 
 
 The header elements may be set multiple times for multiple additional headers
 to be included on any given message.
 
-Note: Obtaining values from nested json keys is not supported.
+* If source is omitted, the header will _always_ be set to the default value
+* If default is omitted the header will only be set if the source is found
+* Note that values from nested json keys is not supported
+
+
 
 ### Example
 
