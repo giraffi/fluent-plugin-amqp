@@ -241,7 +241,7 @@ end
                 </header>
             ]
 
-            message = {"aValue": "Custard"}
+            message = {"aValue" => "Custard"}
 
             event = test_header_message_helper(config, message)
             headers = event[:options][:headers]
