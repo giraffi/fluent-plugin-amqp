@@ -129,12 +129,12 @@ module Fluent::Plugin
           begin
             msg_headers = headers(tag,time,data)
             data = JSON.dump( data ) unless data.is_a?( String )
-            log.debug "Sending message #{data}, :key => #{routing_key( tag)} :headers => #{headers(tag,time)}"
+            log.debug "Sending message #{data}, :key => #{routing_key( tag)} :headers => #{headers(tag,time,data)}"
             @exch.publish(
               data,
               key: routing_key( tag ),
               persistent: @persistent,
-              headers: headers( tag, time ),
+              headers: msg_headers,
               content_type: @content_type,
               content_encoding: @content_encoding)
 
@@ -170,6 +170,7 @@ module Fluent::Plugin
     def headers( tag, time, data )
       h = {}
 
+      log.debug "Processing Headers: #{@headers}"
       @headers.each{ |hdr|
         h[hdr.name]  = data[hdr.source] if hdr.source
         h[hdr.name] ||= hdr.default if hdr.default

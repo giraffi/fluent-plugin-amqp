@@ -208,9 +208,9 @@ end
               </header>
             ]
           message = 'This is a simple string, not json'
-          event = test_header_message_helper(config, message)
+          dl, meta, message = test_header_message_helper(config, message)
 
-          headers = event[:options][:headers]
+          headers = meta[:headers]
           assert_not_nil headers, "Did not find any headers"
           assert_equal 'expectMe', headers["expect-default-header-value"]
 
@@ -228,8 +228,8 @@ end
 
             message = 'This is a simple string, not json'
 
-            event = test_header_message_helper(config, message)
-            headers = event[:options][:headers]
+            dl, meta, message = test_header_message_helper(config, message)
+            headers = meta[:headers]
             assert_not_nil headers, "Did not find any headers"
             assert_equal 'expectMe', headers["unmatched_source_return_default"]
 
@@ -246,8 +246,8 @@ end
 
             message = {"aValue" => "Custard"}
 
-            event = test_header_message_helper(config, message)
-            headers = event[:options][:headers]
+            dl, meta, message = test_header_message_helper(config, message)
+            headers = meta[:headers]
             assert_not_nil headers, "Did not find any headers"
             assert_equal nil, headers["dont-set-this"], "Did not expect to find 'dont-set-this' header"
 
@@ -270,8 +270,9 @@ end
 
             message = { "aValue" => "Custard"}
 
-            event = test_header_message_helper(config, message)
-            headers = event[:options][:headers]
+            dl, meta, message = test_header_message_helper(config, message)
+
+            headers = meta[:headers]
             assert_not_nil headers, "Did not find any headers"
             assert_equal 'Custard', headers["matched_key"]
             assert_equal 'expectMe', headers["unmatched_source_return_default"]
