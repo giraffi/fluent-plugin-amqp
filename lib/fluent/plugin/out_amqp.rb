@@ -63,6 +63,13 @@ module Fluent::Plugin
       config_param :source, :string, default: nil
       config_param :default, :string, default: nil
 
+      # Extract a header and value from the input data
+      # returning nil if value cannot be derived
+      def getValue(data)
+        val  = data[@source] if @source
+        val ||= @default if @default
+        val
+      end
     end
 
     def configure(conf)
@@ -171,11 +178,7 @@ module Fluent::Plugin
       h = {}
 
       log.debug "Processing Headers: #{@headers}"
-      @headers.each{ |hdr|
-        h[hdr.name]  = data[hdr.source] if hdr.source
-        h[hdr.name] ||= hdr.default if hdr.default
-        log.debug "Assigning header #{hdr.name} = #{h[hdr.name]}"
-      }
+      h = Hash[ @headers.collect{|v| [v.name, v.getValue(data) ]} ]
 
       h[@tag_header] = tag if @tag_header
       h[@time_header] = Time.at(time).utc.to_s if @time_header
