@@ -4,7 +4,8 @@ This plugin provides both a Source and Matcher which uses RabbitMQ as its transp
 
 [![Build Status](https://travis-ci.org/giraffi/fluent-plugin-amqp.svg?branch=master)](https://travis-ci.org/giraffi/fluent-plugin-amqp)
 [![Gem Version](https://badge.fury.io/rb/fluent-plugin-amqp.svg)](https://badge.fury.io/rb/fluent-plugin-amqp)
-
+[![Code Climate](https://lima.codeclimate.com/github/giraffi/fluent-plugin-amqp/badges/gpa.svg)](https://lima.codeclimate.com/github/giraffi/fluent-plugin-amqp)
+[![Test Coverage](https://lima.codeclimate.com/github/giraffi/fluent-plugin-amqp/badges/coverage.svg)](https://lima.codeclimate.com/github/giraffi/fluent-plugin-amqp/coverage)
 
 # Table of contents
 
@@ -27,7 +28,7 @@ This plugin provides both a Source and Matcher which uses RabbitMQ as its transp
 |fluent-amqp-plugin|fluent|ruby|
 |----|----|----|
 |>= 0.10.0 | >= 0.14.8 | >= 2.1 |
-| < 0.10.0 | > 0.10.0, < 2 <sup>*</sup> | >= 1.9  | 
+| < 0.10.0 | > 0.10.0, < 2 <sup>*</sup> | >= 1.9  |
 
 * May not support all future fluentd features
 
