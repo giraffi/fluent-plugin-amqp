@@ -6,3 +6,9 @@ rvm:
   - "2.3.0"
 before_install:
   - gem update bundler
+addons:
+  code_climate:
+    repo_token: <token> # SEE https://docs.codeclimate.com/docs/setting-up-test-coverage#section-how-to
+# regular test configuration
+after_success:
+  - bundle exec codeclimate-test-reporter
