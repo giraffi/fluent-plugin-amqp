@@ -1,4 +1,6 @@
 require 'helper'
+require "simplecov"
+SimpleCov.start
 
 class TestFluentPluginAmqp < Test::Unit::TestCase
   should "probably rename this file and start testing for real" do
