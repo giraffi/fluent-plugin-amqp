@@ -82,6 +82,27 @@ class AMPQOutputTestForHeaders < Test::Unit::TestCase
 
   sub_test_case 'message_writing' do
 
+    sub_test_case 'routing_key' do
+      test 'Use hardcoded key when tag_key false' do
+
+        #Note that routing keys are igored when using fanout exchange types
+        # so the dl object shows 'my.test.queue' as thats what we setup in
+        # the helper function - but the message metadata shows the expected key
+          config = CONFIG + %[
+            tag_key false
+            key my.hardcoded.route
+            ]
+
+          message = 'This is a simple string, not json'
+          dl, meta, message = test_header_message_helper(config, message)
+
+          headers = meta[:headers]
+          assert_not_nil headers, "Did not find any headers"
+          assert_equal 'my.hardcoded.route', meta[:key]
+
+      end
+    end
+
     sub_test_case 'message_headers' do
 
       test 'Default headers are set even if message isnt json' do

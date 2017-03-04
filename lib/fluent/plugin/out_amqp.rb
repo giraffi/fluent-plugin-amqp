@@ -150,7 +150,15 @@ module Fluent::Plugin
         chunk.msgpack_each do |(tag, time, data)|
           begin
             msg_headers = headers(tag,time,data)
-            data = JSON.dump( data ) unless data.is_a?( String )
+
+            begin
+              data = JSON.dump( data ) unless data.is_a?( String )
+            rescue JSON::GeneratorError => e
+              log.warn "Failure converting data object to json string: #{e.message} - sending as raw object"
+              # Debug only - otherwise we may pollute the fluent logs with unparseable events and loop
+              log.debug "JSON.dump failure converting [#{data}]"
+            end
+
             log.debug "Sending message #{data}, :key => #{routing_key( tag)} :headers => #{headers(tag,time,data)}"
             @exch.publish(
               data,
@@ -160,10 +168,8 @@ module Fluent::Plugin
               content_type: @content_type,
               content_encoding: @content_encoding)
 
-          rescue JSON::GeneratorError => e
-            log.error "Failure converting data object to json string: #{e.message}"
-            # Debug only - otherwise we may pollute the fluent logs with unparseable events and loop
-            log.debug "JSON.dump failure converting [#{data}]"
+  # :nocov:
+  #  Hard to throw StandardError through test code
           rescue StandardError => e
             # This protects against invalid byteranges and other errors at a per-message level
             log.error "Unexpected error during message publishing: #{e.message}"
@@ -178,6 +184,7 @@ module Fluent::Plugin
         # Just in case theres any other errors during chunk loading.
         log.error "Unexpected error during message publishing: #{e.message}"
       end
+      # :nocov:
     end
 
 
@@ -208,7 +215,6 @@ module Fluent::Plugin
     end
 
 
-    private
     def check_tls_configuration()
       if @tls
         unless @tls_key && @tls_cert
@@ -231,6 +237,5 @@ module Fluent::Plugin
       opts[:tls_ca_certificates] = @tls_ca_certificates if @tls_ca_certificates
       return opts
     end
-
   end
 end
