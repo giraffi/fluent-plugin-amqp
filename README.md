@@ -15,6 +15,7 @@ This plugin provides both a Source and Matcher which uses RabbitMQ as its transp
     1. [Common parameters](#conf-common)
     1. [Source](#conf-source)
     1. [Matcher](#conf-matcher)
+         1. [Message Headers](#conf-matcher-header)
 1. [Example Use Cases](#usecases)
     1. [Using AMQP instead of Fluent TCP forwarders](#uc-forwarder)
     1. [Enable TLS Authentication](#uc-tls)
@@ -153,8 +154,6 @@ Note: The following are in addition to the common parameters shown above.
 
 ## Matcher - output events from RabbitMQ <a name="conf-matcher"></a>
 
-### out
-=======
 ### Matcher specific parameters
 
 |param|type|default|description|
@@ -166,7 +165,7 @@ Note: The following are in addition to the common parameters shown above.
 |:content_type|:string|"application/octet"| Content-type header to send with message |
 |:content_encoding|:string|nil| Content-Encoding header to send - eg base64 or rot13 |
 
-#### Headings
+#### Headers <a name="conf-matcher-headers"></a>
 
 It is possible to specify message headers based on the content of the incoming
 message, or as a fixed default value as shown below;
