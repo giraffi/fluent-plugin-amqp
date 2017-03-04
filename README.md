@@ -188,6 +188,15 @@ message, or as a fixed default value as shown below;
     name CorrelationID
     source x-request-id
   </header>
+  <header>
+    name NestedExample
+    source a.nested.value
+  </header>
+  <header>
+    name AnotherNestedExample
+    source ["a", "nested", "value"]
+  </header>
+
 ...
 </matcher>
 ```
@@ -198,8 +207,10 @@ to be included on any given message.
 
 * If source is omitted, the header will _always_ be set to the default value
 * If default is omitted the header will only be set if the source is found
-* Note that values from nested json keys is not supported
-
+* Overloading headers is permitted
+    * Last defined header with a discovered or default value will be used
+    * Defaults and discovered values are treated equally - If you set a default
+    for a overloaded header the earlier headers *will never be used*
 
 
 ### Example

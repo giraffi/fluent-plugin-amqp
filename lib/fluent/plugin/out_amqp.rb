@@ -60,15 +60,30 @@ module Fluent::Plugin
       include Fluent::Configurable
 
       config_param :name, :string
-      config_param :source, :string, default: nil
       config_param :default, :string, default: nil
+      config_param :source, default: nil  do |val|
+             if val.start_with?('[')
+              JSON.load(val)
+             else
+               val.split('.')
+            end
+         end
 
       # Extract a header and value from the input data
       # returning nil if value cannot be derived
       def getValue(data)
-        val  = data[@source] if @source
+        val  = getNestedValue(data, @source ) if @source
         val ||= @default if @default
         val
+      end
+
+      def getNestedValue(data, path)
+        temp_data = data
+        temp_path = path.dup
+        until temp_data.nil? or temp_path.empty?
+          temp_data = temp_data[temp_path.shift]
+        end
+        temp_data
       end
     end
 
@@ -178,7 +193,13 @@ module Fluent::Plugin
       h = {}
 
       log.debug "Processing Headers: #{@headers}"
-      h = Hash[ @headers.collect{|v| [v.name, v.getValue(data) ]} ]
+      # A little messy this...
+      # Trying to allow for header overrides where a header defined
+      # earlier will be used if a later header is returning nil (ie not found and no default)
+      h = Hash[ @headers
+                  .collect{|v| [v.name, v.getValue(data) ]}
+                  .delete_if{|x| x.last.nil?}
+          ]
 
       h[@tag_header] = tag if @tag_header
       h[@time_header] = Time.at(time).utc.to_s if @time_header
