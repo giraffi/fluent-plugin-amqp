@@ -79,7 +79,9 @@ module Fluent::Plugin
       q.subscribe do |delivery, meta, msg|
         log.debug "Recieved message #{@msg}"
         payload = parse_payload(msg)
-        router.emit(parse_tag(delivery, meta), parse_time(meta), payload)
+	unless router.nil?
+          router.emit(parse_tag(delivery, meta), parse_time(meta), payload)
+        end
       end
     end # AMQPInput#run
 
