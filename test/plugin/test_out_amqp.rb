@@ -127,6 +127,28 @@ end
           ])
       end
     end
+
+    test 'lack of tag in chunk_keys' do
+      assert_raise_message(/'tag' in chunk_keys is required./) do
+        create_driver(Fluent::Config::Element.new(
+                        'ROOT', '', {
+                          '@type' => 'amqp',
+                          'format' => 'json',
+                          'host' => 'amqp.example.com',
+                          'port' => 5672,
+                          'vhost' => '/',
+                          'user' => 'guest',
+                          'pass' => 'guest',
+                          'exchange' => 'my_exchange',
+                          'exchange_type' => 'fanout',
+                          'tag_key' => true
+                        }, [
+                          Fluent::Config::Element.new('buffer', 'mykey', {
+                                                        'chunk_keys' => 'mykey'
+                                                      }, [])
+                        ]))
+      end
+    end
   end
 
   sub_test_case 'connection handling' do
