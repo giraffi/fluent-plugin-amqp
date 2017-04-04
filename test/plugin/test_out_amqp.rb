@@ -146,7 +146,8 @@ end
                           Fluent::Config::Element.new('buffer', 'mykey', {
                                                         'chunk_keys' => 'mykey'
                                                       }, [])
-                        ]))
+                        ]
+                      ))
       end
     end
   end
