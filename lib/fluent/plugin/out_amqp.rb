@@ -111,7 +111,9 @@ module Fluent::Plugin
       unless @key || @tag_key
         raise Fluent::ConfigError, "Either 'key' or 'tag_key' must be set."
       end
-      raise Fluent::ConfigError, "'tag' in chunk_keys is required." if not @chunk_key_tag
+      unless @chunk_key_tag
+        raise Fluent::ConfigError, "'tag' in chunk_keys is required."
+      end
       check_tls_configuration
     end
 
