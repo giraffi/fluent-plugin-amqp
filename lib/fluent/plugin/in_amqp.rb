@@ -71,9 +71,9 @@ module Fluent::Plugin
       @channel = @connection.create_channel
 
       if @exclusive && fluentd_worker_id
-          log.warn "Config requires exclusive ownership on queue with multiple workers - Creating unique queues based on worker_id"
-          @queue = @queue + ".#{fluentd_worker_id}"
-          log.debug "Renamed queue name - #{@queue}"
+        log.info 'Config requested exclusive queue with multiple workers'
+        @queue += ".#{fluentd_worker_id}"
+        log.info "Renamed queue name to include worker id: #{@queue}"
       end
 
       q = @channel.queue(@queue, passive: @passive, durable: @durable,
@@ -99,7 +99,7 @@ module Fluent::Plugin
     def multi_workers_ready?
       true
     end
-    
+
     private
     def parse_payload(msg)
       if @parser

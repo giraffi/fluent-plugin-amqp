@@ -3,7 +3,7 @@
 
 ## 0.12.0 - Unreleased
 
-* #48 - Added support for Multi-Workers
+* giraffi/fluent-plugin-amqp#48 - Added support for Multi-Workers
 
 ## 0.11.x
 
