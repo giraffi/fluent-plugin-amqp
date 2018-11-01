@@ -137,6 +137,10 @@ module Fluent::Plugin
       super
     end
 
+    def multi_workers_ready?
+      true
+    end
+
     def formatted_to_msgpack_binary
       true
     end

@@ -1,6 +1,13 @@
-# 0.11.x
 
-## 0.11.0 - Unreleased
+## 0.12.x
+
+## 0.12.0 - Unreleased
+
+* #48 - Added support for Multi-Workers
+
+## 0.11.x
+
+## 0.11.0 - March 10, 2017
 
 * Added `content_type` and `content_encoding` configuration for
    the Matcher plugin - #37

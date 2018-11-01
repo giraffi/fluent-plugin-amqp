@@ -69,6 +69,13 @@ module Fluent::Plugin
       @connection = Bunny.new get_connection_options unless @connection
       @connection.start
       @channel = @connection.create_channel
+
+      if @exclusive && fluentd_worker_id
+          log.warn "Config requires exclusive ownership on queue with multiple workers - Creating unique queues based on worker_id"
+          @queue = @queue + ".#{fluentd_worker_id}"
+          log.debug "Renamed queue name - #{@queue}"
+      end
+
       q = @channel.queue(@queue, passive: @passive, durable: @durable,
                        exclusive: @exclusive, auto_delete: @auto_delete)
       if @bind_exchange
@@ -89,6 +96,10 @@ module Fluent::Plugin
       super
     end
 
+    def multi_workers_ready?
+      true
+    end
+    
     private
     def parse_payload(msg)
       if @parser

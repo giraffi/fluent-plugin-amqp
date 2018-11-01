@@ -131,7 +131,7 @@ Note: The following are in addition to the common parameters shown above.
 |----|----|----|---|
 |:tag|:string|"hunter.amqp"| Accepted events are tagged with this string (See also tag_key)|
 |:queue|:string|nil| What queue contains the events to read |
-|:exclusive|:bool|false| Should we have exclusive use of the queue? |
+|:exclusive|:bool|false| Should we have exclusive use of the queue? See notes on `Multiple Workers` below.|
 |:payload_format|:string|"json"| Deprecated - Use `format`|
 |:bind_exchange|:boolean|false| Should the queue automatically bind to the exchange |
 |:exchange|:string|nil| What exchange should the queue bind to? |
@@ -303,6 +303,22 @@ Note: The 'source' configuration accepts the same arguments.
 </match>
 ```
 
+
+## Multiple Workers
+
+This plugin supports multiple workers for both source and matcher configurations.
+
+Note that when using exclusive queues with multiple workers the queues will be renamed based on the worker id. 
+
+For example, if your queue is configured as `fluent.queue`, with 4 workers and `exclusive: true` the plugin
+will create four named queues;
+
+- fluent.queue.0
+- fluent.queue.1
+- fluent.queue.2
+- fluent.queue.3
+
+
 ## Docker Container
 
 A docker container is included in this project to help with testing and debugging.
@@ -330,10 +346,10 @@ You may find that rabbitmq doesn't behave nicely when delivering lots of events 
 To use this;
 
 1. Enable the plugin on all nodes `rabbitmq-plugins enable rabbitmq_sharding`
-1. Create an exchange to accept events and to be sharded using `x-modulus-hash` or `x-consistent-hash`
-1. Configure a sharding policy on the input exchange
+2. Create an exchange to accept events and to be sharded using `x-modulus-hash` or `x-consistent-hash`
+3. Configure a sharding policy on the input exchange
     - `rabbitmqctl set_policy images-shard "^fluent.modhash$" '{"shards-per-node": 2, "routing-key": "1234"}'`
-1. Setup fluentd to use the associated type and bind to a queue named the same as the input exchange name
+4. Setup fluentd to use the associated type and bind to a queue named the same as the input exchange name
     - This queue is created 'dynamically' and will not show as a formal queue in the manager, but will deliver events to fluent normally
     
 *Warning*: You will need to run at least N consumers for the N shards created as the plugin does not try to route all shards onto consumers dynamically.
