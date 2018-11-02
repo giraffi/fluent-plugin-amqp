@@ -313,11 +313,12 @@ Note that when using exclusive queues with multiple workers the queues will be r
 For example, if your queue is configured as `fluent.queue`, with 4 workers and `exclusive: true` the plugin
 will create four named queues;
 
-- fluent.queue.0
+- fluent.queue
 - fluent.queue.1
 - fluent.queue.2
 - fluent.queue.3
 
+Be aware that the first queue will keep the same name as given to maintain compatibility.
 
 ## Docker Container
 
