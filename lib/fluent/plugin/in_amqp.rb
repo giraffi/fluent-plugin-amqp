@@ -70,7 +70,7 @@ module Fluent::Plugin
       @connection.start
       @channel = @connection.create_channel
 
-      if @exclusive && fluentd_worker_id
+      if @exclusive && fluentd_worker_id > 0
         log.info 'Config requested exclusive queue with multiple workers'
         @queue += ".#{fluentd_worker_id}"
         log.info "Renamed queue name to include worker id: #{@queue}"
