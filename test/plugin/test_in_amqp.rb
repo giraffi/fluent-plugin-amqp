@@ -8,7 +8,7 @@ require 'fluent/plugin/in_amqp'
 class AMPQInputTest < Test::Unit::TestCase
   include Fluent::Test::Helpers
 
-  CONFIG = %q(
+  CONFIG = %(
     type amqp
     format json
     host amqp.example.com
@@ -17,7 +17,7 @@ class AMPQInputTest < Test::Unit::TestCase
     user guest
     pass guest
     queue logs
-  )
+  ).freeze
   
   TLS_CONFIG = CONFIG + %q(
     tls true
@@ -25,7 +25,7 @@ class AMPQInputTest < Test::Unit::TestCase
     tls_cert "/etc/fluent/ssl/client.crt.pem"
     tls_ca_certificates ["/etc/fluent/ssl/server.cacrt.pem", "/another/ca/cert.file"]
     tls_verify_peer true
-  )
+  ).freeze
 
   setup do
     Fluent::Test.setup
@@ -66,7 +66,7 @@ class AMPQInputTest < Test::Unit::TestCase
 
 
     test 'non exclusive and multi worker shouldnt change queue name' do
-      conf = CONFIG + %q(
+      conf = CONFIG + %(
         type amqp
         format json
         exclusive false
@@ -85,7 +85,7 @@ class AMPQInputTest < Test::Unit::TestCase
     end
 
     test 'exclusive without multiple workers, shouldnt change queue name' do
-      conf = CONFIG + %q(
+      conf = CONFIG + %(
         type amqp
         format json
         exclusive true
@@ -101,7 +101,7 @@ class AMPQInputTest < Test::Unit::TestCase
     end
 
     test 'exclusive with multiple workers doesnt update first queue name' do
-      conf = CONFIG + %q(
+      conf = CONFIG + %(
         type amqp
         format json
         exclusive true
@@ -119,7 +119,7 @@ class AMPQInputTest < Test::Unit::TestCase
     end
 
     test 'exclusive with multiple workers changes queue name for workers >=1 ' do
-      conf = CONFIG + %q(
+      conf = CONFIG + %(
         type amqp
         format json
         exclusive true
@@ -138,13 +138,13 @@ class AMPQInputTest < Test::Unit::TestCase
 
     test 'invalid tls configuration' do
       assert_raise_message(/'tls_key' and 'tls_cert' must be all specified if tls is enabled./) do
-        @d.configure(CONFIG + %q(tls true))
+        @d.configure(CONFIG + %(tls true))
       end
     end
 
     test 'invalid host / queue configuration' do
       assert_raise_message(/'host\(s\)' and 'queue' must be all specified./) do
-        @d.configure(%q(
+        @d.configure(%(
           type amqp
           format json
           host bob
