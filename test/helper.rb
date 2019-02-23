@@ -3,6 +3,9 @@ require 'bundler'
 require 'simplecov'
 SimpleCov.start
 
+require 'coveralls'
+Coveralls.wear!
+
 begin
   Bundler.setup(:default, :development)
 rescue Bundler::BundlerError => e

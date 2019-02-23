@@ -1,5 +1,5 @@
 gemfile:
-- gemfiles/fluentd_0.14.gemfile
+- gemfiles/fluentd_1.0.gemfile
 rvm:
   - "2.1"
   - "2.2"

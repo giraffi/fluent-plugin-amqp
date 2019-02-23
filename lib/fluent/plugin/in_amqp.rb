@@ -68,6 +68,13 @@ module Fluent::Plugin
       @connection = Bunny.new get_connection_options unless @connection
       @connection.start
       @channel = @connection.create_channel
+
+      if @exclusive && fluentd_worker_id > 0
+        log.info 'Config requested exclusive queue with multiple workers'
+        @queue += ".#{fluentd_worker_id}"
+        log.info "Renamed queue name to include worker id: #{@queue}"
+      end
+
       q = @channel.queue(@queue, passive: @passive, durable: @durable,
                        exclusive: @exclusive, auto_delete: @auto_delete)
       if @bind_exchange
@@ -86,6 +93,10 @@ module Fluent::Plugin
       log.info "Closing connection"
       @connection.stop
       super
+    end
+
+    def multi_workers_ready?
+      true
     end
 
     private

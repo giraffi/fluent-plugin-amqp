@@ -4,7 +4,7 @@ This plugin provides both a Source and Matcher which uses RabbitMQ as its transp
 
 [![Build Status](https://travis-ci.org/giraffi/fluent-plugin-amqp.svg?branch=master)](https://travis-ci.org/giraffi/fluent-plugin-amqp)
 [![Gem Version](https://badge.fury.io/rb/fluent-plugin-amqp.svg)](https://badge.fury.io/rb/fluent-plugin-amqp)
-
+[![Coverage Status](https://coveralls.io/repos/github/giraffi/fluent-plugin-amqp/badge.svg)](https://coveralls.io/github/giraffi/fluent-plugin-amqp)
 
 # Table of contents
 
@@ -15,6 +15,7 @@ This plugin provides both a Source and Matcher which uses RabbitMQ as its transp
     1. [Common parameters](#conf-common)
     1. [Source](#conf-source)
     1. [Matcher](#conf-matcher)
+         1. [Message Headers](#conf-matcher-header)
 1. [Example Use Cases](#usecases)
     1. [Using AMQP instead of Fluent TCP forwarders](#uc-forwarder)
     1. [Enable TLS Authentication](#uc-tls)
@@ -130,10 +131,11 @@ Note: The following are in addition to the common parameters shown above.
 |----|----|----|---|
 |:tag|:string|"hunter.amqp"| Accepted events are tagged with this string (See also tag_key)|
 |:queue|:string|nil| What queue contains the events to read |
-|:exclusive|:bool|false| Should we have exclusive use of the queue? |
+|:exclusive|:bool|false| Should we have exclusive use of the queue? See notes on `Multiple Workers` below.|
 |:payload_format|:string|"json"| Deprecated - Use `format`|
 |:bind_exchange|:boolean|false| Should the queue automatically bind to the exchange |
 |:exchange|:string|nil| What exchange should the queue bind to? |
+|:exchange_type|:string|"direct"| Type of exchange ( direct, fanout, topic, headers, x-consistent-hash, x-modulus-hash )|
 |:routing_key|:string|nil| What exchange should the queue bind to? |
 
 ### Example
@@ -153,16 +155,63 @@ Note: The following are in addition to the common parameters shown above.
 
 ## Matcher - output events from RabbitMQ <a name="conf-matcher"></a>
 
-### out
-=======
 ### Matcher specific parameters
 
 |param|type|default|description|
 |----|----|----|----|
 |:exchange|:string|""| Name of the exchange to send events to |
-|:exchange_type|:string|"direct"| Type of exchange ( direct, fanout, topic, headers )|
+|:exchange_type|:string|"direct"| Type of exchange ( direct, fanout, topic, headers, x-consistent-hash, x-modulus-hash )|
 |:persistent|:bool|false| | Are messages kept on the exchange even if RabbitMQ shuts down |
 |:key|:string|nil| Routing key to attach to events (Only applies when `exchange_type topic`) See also `tag_key`|
+|:content_type|:string|"application/octet"| Content-type header to send with message |
+|:content_encoding|:string|nil| Content-Encoding header to send - eg base64 or rot13 |
+
+#### Headers <a name="conf-matcher-headers"></a>
+
+It is possible to specify message headers based on the content of the incoming
+message, or as a fixed default value as shown below;
+
+```
+<matcher ...>
+...
+
+  <header>
+    name LogLevel
+    source level
+    default "INFO"
+  </header>
+  <header>
+    name SourceHost
+    default my.example.com
+  </header>
+  <header>
+    name CorrelationID
+    source x-request-id
+  </header>
+  <header>
+    name NestedExample
+    source a.nested.value
+  </header>
+  <header>
+    name AnotherNestedExample
+    source ["a", "nested", "value"]
+  </header>
+
+...
+</matcher>
+```
+
+
+The header elements may be set multiple times for multiple additional headers
+to be included on any given message.
+
+* If source is omitted, the header will _always_ be set to the default value
+* If default is omitted the header will only be set if the source is found
+* Overloading headers is permitted
+    * Last defined header with a discovered or default value will be used
+    * Defaults and discovered values are treated equally - If you set a default
+    for a overloaded header the earlier headers *will never be used*
+
 
 ### Example
 
@@ -176,6 +225,7 @@ Note: The following are in addition to the common parameters shown above.
   vhost /
   user guest
   pass guest
+  content_type application/json
 </match>
 ```
 
@@ -241,17 +291,33 @@ Note: The 'source' configuration accepts the same arguments.
   host amqp.example.com
   port 5671              # Note that your port may change for TLS auth
   vhost /
-  user guest
-  pass guest
 
   tls true
   tls_key "/etc/fluent/ssl/client.key.pem"
   tls_cert "/etc/fluent/ssl/client.crt.pem"
   tls_ca_certificates ["/etc/fluent/ssl/server.cacrt.pem", "/another/ca/cert.file"]
   tls_verify_peer true
+  auth_mechanism EXTERNAL
 
 </match>
 ```
+
+
+## Multiple Workers
+
+This plugin supports multiple workers for both source and matcher configurations.
+
+Note that when using exclusive queues with multiple workers the queues will be renamed based on the worker id. 
+
+For example, if your queue is configured as `fluent.queue`, with 4 workers and `exclusive: true` the plugin
+will create four named queues;
+
+- fluent.queue
+- fluent.queue.1
+- fluent.queue.2
+- fluent.queue.3
+
+Be aware that the first queue will keep the same name as given to maintain compatibility.
 
 ## Docker Container
 
@@ -273,7 +339,20 @@ with;
 ```
 while [ true ] ; do echo "{ \"test\": \"$(date)\" }" | nc ${DOCKER_IP} 20001; sleep 1; done
 ```
+## Rabbitmq-sharding
 
+You may find that rabbitmq doesn't behave nicely when delivering lots of events to a single queue as the process thread gets overloaded and starts to send flow control events back to publishers. If you're in this situation, try the rabbitmq-sharding plugin which is in RMQ 3.6+ and can allow queues to be dynamically generated per-node.
+
+To use this;
+
+1. Enable the plugin on all nodes `rabbitmq-plugins enable rabbitmq_sharding`
+2. Create an exchange to accept events and to be sharded using `x-modulus-hash` or `x-consistent-hash`
+3. Configure a sharding policy on the input exchange
+    - `rabbitmqctl set_policy images-shard "^fluent.modhash$" '{"shards-per-node": 2, "routing-key": "1234"}'`
+4. Setup fluentd to use the associated type and bind to a queue named the same as the input exchange name
+    - This queue is created 'dynamically' and will not show as a formal queue in the manager, but will deliver events to fluent normally
+    
+*Warning*: You will need to run at least N consumers for the N shards created as the plugin does not try to route all shards onto consumers dynamically.
 
 # Contributing to fluent-plugin-amqp <a name="contributing"></a>
 

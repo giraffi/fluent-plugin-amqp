@@ -1,8 +1,25 @@
+# 0.13.x
 
-
-# 0.11.x
+## 0.13.1 - Feb 23, 2019
 
 * Feature: TLS Client Certificate and Key are no longer required if TLS is setup
+
+## 0.12.x
+
+## 0.12.0 - Nov 02, 2018
+
+* giraffi/fluent-plugin-amqp#48 - Added support for Multi-Workers
+
+## 0.11.x
+
+## 0.11.0 - March 10, 2017
+
+* Added `content_type` and `content_encoding` configuration for
+   the Matcher plugin - #37
+* Added header options to set message headers based on the message content on
+  the Matcher plugin - #35
+* Enabled support for Coveralls code-coverage reporting
+
 
 # 0.10.x
 
@@ -15,8 +32,6 @@
 * *Breaking Change* - fluent-amqp-plugin only compatible with fluent >= 0.14.8 and ruby >= 2.1
 * Feature: Updated to use new FluentD 0.14 plugin format
 * Feature: Support for nanosecond precision
-
-
 
 # 0.9.x
 
