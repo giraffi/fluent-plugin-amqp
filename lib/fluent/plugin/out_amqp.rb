@@ -219,7 +219,6 @@ module Fluent::Plugin
     end
 
 
-    private
     def get_connection_options()
       hosts = @hosts ||= Array.new(1, @host)
       opts = {
