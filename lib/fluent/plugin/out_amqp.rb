@@ -54,6 +54,7 @@ module Fluent::Plugin
 
     config_section :buffer do
       config_set_default :@type, DEFAULT_BUFFER_TYPE
+      config_set_default :chunk_keys, ['tag']
     end
 
 
@@ -111,6 +112,9 @@ module Fluent::Plugin
       unless @key || @tag_key
         raise Fluent::ConfigError, "Either 'key' or 'tag_key' must be set."
       end
+      unless @chunk_key_tag
+        raise Fluent::ConfigError, "'tag' in chunk_keys is required."
+      end
       check_tls_configuration
     end
 
@@ -147,12 +151,13 @@ module Fluent::Plugin
     end
 
     def format(tag, time, record)
-      [tag, time, record].to_msgpack
+      [time, record].to_msgpack
     end
 
     def write(chunk)
       begin
-        chunk.msgpack_each do |(tag, time, data)|
+        tag = chunk.metadata.tag
+        chunk.msgpack_each do |(time, data)|
           begin
             msg_headers = headers(tag,time,data)
 
