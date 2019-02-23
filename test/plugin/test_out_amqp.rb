@@ -81,12 +81,6 @@ end
       assert_equal "/", d.instance.vhost
     end
 
-    test 'invalid tls configuration' do
-      assert_raise_message(/'tls_key' and 'tls_cert' must be all specified if tls is enabled./) do
-        create_driver(CONFIG + %[tls true])
-      end
-    end
-
     test 'invalid host configuration' do
       assert_raise_message(/'host' or 'hosts' must be specified./) do
         create_driver(%[

@@ -59,7 +59,6 @@ module Fluent::Plugin
       unless @key || @tag_key
         raise Fluent::ConfigError, "Either 'key' or 'tag_key' must be set."
       end
-      check_tls_configuration
     end
 
     def start
@@ -139,14 +138,6 @@ module Fluent::Plugin
 
 
     private
-    def check_tls_configuration()
-      if @tls
-        unless @tls_key && @tls_cert
-            raise Fluent::ConfigError, "'tls_key' and 'tls_cert' must be all specified if tls is enabled."
-        end
-      end
-    end
-
     def get_connection_options()
       hosts = @hosts ||= Array.new(1, @host)
       opts = {

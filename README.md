@@ -27,7 +27,7 @@ This plugin provides both a Source and Matcher which uses RabbitMQ as its transp
 |fluent-amqp-plugin|fluent|ruby|
 |----|----|----|
 |>= 0.10.0 | >= 0.14.8 | >= 2.1 |
-| < 0.10.0 | > 0.10.0, < 2 <sup>*</sup> | >= 1.9  | 
+| < 0.10.0 | > 0.10.0, < 2 <sup>*</sup> | >= 1.9  |
 
 * May not support all future fluentd features
 
@@ -102,8 +102,8 @@ plugins, and can be used as required.
 |:ssl|:bool|false| Is SSL enabled for this connection to RabbitMQ|
 |:verify_ssl|:bool|false| Verify the SSL certificate presented by RabbitMQ |
 |:tls|:bool|false| Should TLS be used for authentication |
-|:tls_cert|:string|nil| *Required if `tls true`* Path (or content) of TLS Certificate |
-|:tls_key|:string|nil| *Required if `tls true`* Path (or content) of TLS Key |
+|:tls_cert|:string|nil| Path (or content) of TLS Certificate |
+|:tls_key|:string|nil| Path (or content) of TLS Key |
 |:tls_ca_certificates|:array|nil| Array of paths to CA certificates |
 |:tls_verify_peer|:bool|true| Verify the servers TLS certificate |
 |:tag_key|:bool|false| Should the routing key be used for the event tag |

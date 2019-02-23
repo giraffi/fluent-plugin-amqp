@@ -60,7 +60,6 @@ module Fluent::Plugin
       unless (@host || @hosts) && @queue
         raise Fluent::ConfigError, "'host(s)' and 'queue' must be all specified."
       end
-      check_tls_configuration
     end
 
     def start
@@ -125,14 +124,6 @@ module Fluent::Plugin
       end
     end
 
-    def check_tls_configuration()
-      if @tls
-        unless @tls_key && @tls_cert
-            raise Fluent::ConfigError, "'tls_key' and 'tls_cert' must be all specified if tls is enabled."
-        end
-      end
-    end
-
     def get_connection_options()
       hosts = @hosts ||= Array.new(1, @host)
       opts = {
@@ -140,10 +131,11 @@ module Fluent::Plugin
         pass: @pass, user: @user, ssl: @ssl,
         verify_ssl: @verify_ssl, heartbeat: @heartbeat,
         tls: @tls,
-        tls_cert: @tls_cert,
-        tls_key: @tls_key,
         verify_peer: @tls_verify_peer
       }
+      # Include additional optional TLS configurations
+      opts[:tls_key] = @tls_key if @tls_key
+      opts[:tls_cert] = @tls_cert if @tls_cert
       opts[:tls_ca_certificates] = @tls_ca_certificates if @tls_ca_certificates
       return opts
     end

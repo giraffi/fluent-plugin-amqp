@@ -1,5 +1,10 @@
-# 0.10.x
 
+
+# 0.11.x
+
+* Feature: TLS Client Certificate and Key are no longer required if TLS is setup
+
+# 0.10.x
 
 ## 0.10.1 - 2016-11-17
 
