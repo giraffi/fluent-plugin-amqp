@@ -1,8 +1,8 @@
 # 0.13.x
 
-## 0.13.1 - Feb 23, 2019
+## 0.13.0 - Feb 24, 2019
 
-* Feature: TLS Client Certificate and Key are no longer required if TLS is setup
+* Feature: TLS Client Certificate and Key are no longer required if TLS is setup - #57
 
 ## 0.12.x
 
