@@ -95,7 +95,7 @@ end
         configs.merge!('tls' => CONFIG + %q(tls true))
 
         configs.each_pair { |k, v|
-          @d = Fluent::Test::Driver::Input.new(Fluent::Plugin::AMQPOutput).configure(v)
+          @d = Fluent::Test::Driver::Output.new(Fluent::Plugin::AMQPOutput).configure(v)
           assert_equal "amqp.example.com", @d.instance.host
           assert_equal 5672, @d.instance.port
           assert_equal "guest", @d.instance.user
@@ -113,7 +113,7 @@ end
           ))
 
         configs.each_pair { |k, v|
-          @d = Fluent::Test::Driver::Input.new(Fluent::Plugin::AMQPOutput).configure(v)
+          @d = Fluent::Test::Driver::Output.new(Fluent::Plugin::AMQPOutput).configure(v)
           assert_equal "amqp.example.com", @d.instance.host
           assert_equal 5672, @d.instance.port
           assert_equal "guest", @d.instance.user
