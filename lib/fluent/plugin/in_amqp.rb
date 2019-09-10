@@ -44,6 +44,7 @@ module Fluent::Plugin
     config_param :bind_exchange, :bool, default: false
     config_param :exchange, :string, default: ""
     config_param :routing_key, :string, default: "#"                       # The routing key used to bind queue to exchange - # = matches all, * matches section (tag.*.info)
+    config_param :auth_mechanism, :string, default: nil
 
     def configure(conf)
       conf['format'] ||= conf['payload_format'] # legacy
@@ -142,7 +143,8 @@ module Fluent::Plugin
         pass: @pass, user: @user, ssl: @ssl,
         verify_ssl: @verify_ssl, heartbeat: @heartbeat,
         tls: @tls,
-        verify_peer: @tls_verify_peer
+        verify_peer: @tls_verify_peer,
+        auth_mechanism: @auth_mechanism
       }
       # Include additional optional TLS configurations
       opts[:tls_key] = @tls_key if @tls_key
