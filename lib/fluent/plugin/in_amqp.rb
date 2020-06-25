@@ -71,7 +71,7 @@ module Fluent::Plugin
       @connection.start
       @channel = @connection.create_channel
 
-      if @prefetch && @prefetch > 0
+      if @prefetch > 0
         @channel.prefetch(@prefetch)
 
       if @exclusive && fluentd_worker_id > 0
