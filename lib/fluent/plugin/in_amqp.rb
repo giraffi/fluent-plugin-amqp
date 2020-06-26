@@ -73,6 +73,7 @@ module Fluent::Plugin
 
       if @prefetch > 0
         @channel.prefetch(@prefetch)
+      end
 
       if @exclusive && fluentd_worker_id > 0
         log.info 'Config requested exclusive queue with multiple workers'
