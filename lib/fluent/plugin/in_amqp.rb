@@ -94,6 +94,7 @@ module Fluent::Plugin
         log.debug "Recieved message #{@msg}"
         payload = parse_payload(msg)
         router.emit(parse_tag(delivery, meta), parse_time(meta), payload)
+        @channel.acknowledge(delivery.delivery_tag, false)
         if @delay > 0
           sleep(delay / 1000)
         end
