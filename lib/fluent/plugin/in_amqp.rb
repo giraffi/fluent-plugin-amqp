@@ -31,6 +31,7 @@ module Fluent::Plugin
     config_param :durable, :bool, default: false
     config_param :exclusive, :bool, default: false
     config_param :auto_delete, :bool, default: false
+    config_param :manual_ack, :bool, default: false
     config_param :passive, :bool, default: false
     config_param :prefetch, :integer, default: 0
     config_param :payload_format, :string, default: "json"
@@ -90,11 +91,13 @@ module Fluent::Plugin
         q.bind(exchange=@exchange, routing_key: @routing_key)
       end
 
-      q.subscribe do |delivery, meta, msg|
+      q.subscribe(:manual_ack => @manual_ack) do |delivery, meta, msg|
         log.debug "Recieved message #{@msg}"
         payload = parse_payload(msg)
         router.emit(parse_tag(delivery, meta), parse_time(meta), payload)
-        @channel.acknowledge(delivery.delivery_tag, false)
+        if @manual_ack
+          @channel.acknowledge(delivery.delivery_tag, false)
+        end
         if @delay > 0
           sleep(delay / 1000)
         end
