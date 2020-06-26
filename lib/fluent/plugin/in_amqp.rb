@@ -46,6 +46,8 @@ module Fluent::Plugin
     config_param :exchange, :string, default: ""
     config_param :routing_key, :string, default: "#"                       # The routing key used to bind queue to exchange - # = matches all, * matches section (tag.*.info)
     config_param :auth_mechanism, :string, default: nil
+    # milliseconds to delay between messages
+    config_param :delay, :integer, default: 0
 
     def configure(conf)
       conf['format'] ||= conf['payload_format'] # legacy
@@ -92,6 +94,9 @@ module Fluent::Plugin
         log.debug "Recieved message #{@msg}"
         payload = parse_payload(msg)
         router.emit(parse_tag(delivery, meta), parse_time(meta), payload)
+        if @delay > 0
+          sleep(delay / 1000)
+        end
       end
     end # AMQPInput#run
 
