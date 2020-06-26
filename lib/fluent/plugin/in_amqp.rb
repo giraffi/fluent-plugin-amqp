@@ -50,6 +50,12 @@ module Fluent::Plugin
     # milliseconds to delay between messages
     config_param :delay, :integer, default: 0
 
+    def initialize
+      super
+      @ack_queue = Queue.new
+      @ack_thread = nil
+    end
+
     def configure(conf)
       conf['format'] ||= conf['payload_format'] # legacy
       compat_parameters_convert(conf, :parser)
@@ -91,12 +97,34 @@ module Fluent::Plugin
         q.bind(exchange=@exchange, routing_key: @routing_key)
       end
 
+      if @manual_ack
+        @ack_thread = Thread.new {
+          @stop = false
+          loop do 
+            tag = @ack_queue.pop
+            case tag
+            when :stop
+              @stop = true
+            else
+              begin
+                @channel.acknowledge(tag, false)
+              rescue => e
+                log.error "Failed to acknowledge event", tag: tag, error: e
+              end
+            end
+            if @stop && @ack_queue.empty?
+              break
+            end
+          end
+        }
+      end
+
       q.subscribe(:manual_ack => @manual_ack) do |delivery, meta, msg|
         log.debug "Recieved message #{@msg}"
         payload = parse_payload(msg)
         router.emit(parse_tag(delivery, meta), parse_time(meta), payload)
         if @manual_ack
-          @channel.acknowledge(delivery.delivery_tag, false)
+          @ack_queue.push(delivery.delivery_tag)
         end
         if @delay > 0
           sleep(delay / 1000)
@@ -107,6 +135,10 @@ module Fluent::Plugin
     def shutdown
       log.info "Closing connection"
       @connection.stop
+      if @manual_ack
+        @ack_queue.push(:stop)
+        @ack_thread && @ack_thread.join
+      end
       super
     end
 
