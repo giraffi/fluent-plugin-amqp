@@ -32,6 +32,7 @@ module Fluent::Plugin
     config_param :exclusive, :bool, default: false
     config_param :auto_delete, :bool, default: false
     config_param :passive, :bool, default: false
+    config_param :prefetch, :integer, default: 0
     config_param :payload_format, :string, default: "json"
     config_param :tag_key, :bool, default: false
     config_param :tag_header, :string, default: nil
@@ -69,6 +70,10 @@ module Fluent::Plugin
       @connection = Bunny.new get_connection_options unless @connection
       @connection.start
       @channel = @connection.create_channel
+
+      if @prefetch > 0
+        @channel.prefetch(@prefetch)
+      end
 
       if @exclusive && fluentd_worker_id > 0
         log.info 'Config requested exclusive queue with multiple workers'
