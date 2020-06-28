@@ -49,6 +49,7 @@ module Fluent::Plugin
     config_param :auth_mechanism, :string, default: nil
     # milliseconds to delay between messages
     config_param :delay, :integer, default: 0
+    config_param :callback, :bool, default: false
 
     def initialize
       super
@@ -101,13 +102,17 @@ module Fluent::Plugin
         @ack_thread = Thread.new {
           @stop = false
           loop do 
-            tag = @ack_queue.pop
+            [tag, success] = @ack_queue.pop
             case tag
             when :stop
               @stop = true
             else
               begin
-                @channel.acknowledge(tag, false)
+                if success
+                  @channel.acknowledge(tag, false)
+                else
+                  @channel.reject(tag, false)
+                end
               rescue => e
                 log.error "Failed to acknowledge event", tag: tag, error: e
               end
@@ -121,10 +126,18 @@ module Fluent::Plugin
 
       q.subscribe(:manual_ack => @manual_ack) do |delivery, meta, msg|
         log.debug "Recieved message #{@msg}"
-        payload = parse_payload(msg)
+        body = parse_payload(msg)
+        if @manual_ack && @callback
+          cb = Proc.new do | success |
+            @ack_queue.push([delivery.delivery_tag, success])
+          end
+          payload = { :payload => payload, :callback => cb }
+        else
+          payload = body
+        end
         router.emit(parse_tag(delivery, meta), parse_time(meta), payload)
-        if @manual_ack
-          @ack_queue.push(delivery.delivery_tag)
+        if @manual_ack && !@callback
+          @ack_queue.push([delivery.delivery_tag, true])
         end
         if @delay > 0
           sleep(delay / 1000)
