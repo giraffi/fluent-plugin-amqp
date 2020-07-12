@@ -1,3 +1,10 @@
+# 0.14.x
+
+## 0.14.0
+
+* Added
+  * Message Headers from source [#62](https://github.com/giraffi/fluent-plugin-amqp/pull/62/) - Thanks @MaheshKReddy
+
 # 0.13.x
 
 ## 0.13.0 - Feb 24, 2019
