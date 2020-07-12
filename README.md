@@ -137,6 +137,7 @@ Note: The following are in addition to the common parameters shown above.
 |:exchange|:string|nil| What exchange should the queue bind to? |
 |:exchange_type|:string|"direct"| Type of exchange ( direct, fanout, topic, headers, x-consistent-hash, x-modulus-hash )|
 |:routing_key|:string|nil| What exchange should the queue bind to? |
+|:include_headers|:bool|false| If true, include Message headers in the parsed payload with key "headers" (if there is already a field name headers in the parsed payload, then it will be overwritten) |
 
 ### Example
 

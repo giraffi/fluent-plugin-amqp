@@ -44,6 +44,7 @@ module Fluent::Plugin
     config_param :bind_exchange, :bool, default: false
     config_param :exchange, :string, default: ""
     config_param :routing_key, :string, default: "#"                       # The routing key used to bind queue to exchange - # = matches all, * matches section (tag.*.info)
+    config_param :include_headers, :bool, default: false
     config_param :auth_mechanism, :string, default: nil
 
     def configure(conf)
@@ -84,8 +85,10 @@ module Fluent::Plugin
       end
 
       q.subscribe do |delivery, meta, msg|
-        log.debug "Recieved message #{@msg}"
-        payload = parse_payload(msg)
+        log.debug "Recieved message #{msg}"
+        log.debug "Recieved message  MetaData #{meta}"
+        payload = parse_payload(msg, meta)
+        log.debug "Parsed Payload #{payload}"
         router.emit(parse_tag(delivery, meta), parse_time(meta), payload)
       end
     end # AMQPInput#run
@@ -101,20 +104,25 @@ module Fluent::Plugin
     end
 
     private
-    def parse_payload(msg)
+    def parse_payload(msg, meta)
+      parsed = nil
       if @parser
-        parsed = nil
         @parser.parse msg do |_, payload|
           if payload.nil?
             log.warn "failed to parse #{msg}"
-            parsed = { "message" => msg }
+            parsed = { 'message' => msg }
           else
             parsed = payload
           end
         end
-        parsed
       else
-        { "message" => msg }
+        parsed = { 'message' => msg }
+      end
+      if @include_headers
+        log.debug 'Adding headers'
+        { 'headers' => meta[:headers] }.merge(parsed)
+      else
+        parsed
       end
     end
 
